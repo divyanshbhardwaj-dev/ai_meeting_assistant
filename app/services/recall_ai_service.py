@@ -1,6 +1,9 @@
 import requests
 from app.config.settings import settings
 import time
+from app.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 class RecallService:
@@ -30,10 +33,13 @@ class RecallService:
                 "meeting_metadata": {}
             }
         }
+        logger.info(f"Sending request to create bot: {url}")
         response = requests.post(url, json=payload, headers=self.headers)
 
-        print("STATUS:", response.status_code)
-        print("RESPONSE:", response.text)
+        logger.info(f"Create bot STATUS: {response.status_code}")
+        
+        if response.status_code != 201:
+            logger.error(f"Failed to create bot: {response.text}")
 
         response.raise_for_status()
         return response.json()
@@ -41,7 +47,6 @@ class RecallService:
     # 2. Get bot status
     def get_bot(self, bot_id: str):
         url = f"{self.base_url}/bot/{bot_id}/"
-
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json()
@@ -49,13 +54,13 @@ class RecallService:
     # 3. List all bots (optional but useful)
     def list_bots(self):
         url = f"{self.base_url}/bot/"
-
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json()
     
-    def wait_for_recording(self, bot_id: str, timeout: int = 1200):
+    def wait_for_transcript(self, bot_id: str, timeout: int = 1200):
         start_time = time.time()
+        logger.info(f"Waiting for transcript for bot {bot_id}...")
 
         while True:
             bot_data = self.get_bot(bot_id)
@@ -68,31 +73,29 @@ class RecallService:
                 )
 
                 if not rec:
-                    print("⏳ No completed recording yet...")
+                    logger.info("⏳ No completed recording yet...")
                 else:
                     transcript = rec.get("media_shortcuts", {}).get("transcript", {})
                     status = transcript.get("status", {}).get("code")
                     download_url = transcript.get("data", {}).get("download_url")
 
-                    print(f"📝 Transcript Status: {status}")
-
-                    # Debug (optional)
-                    # print("FULL TRANSCRIPT OBJECT:", transcript)
+                    logger.info(f"📝 Transcript Status: {status}")
 
                     if status in ["failed", "canceled"]:
+                        logger.error(f"Transcript failed with status: {status}")
                         raise Exception(f"Transcript failed: {status}")
 
                     if status in ["done", "completed"] and download_url:
-                        print("✅ Transcript ready!")
+                        logger.info("✅ Transcript ready!")
                         return download_url
 
             else:
-                print("⏳ No recordings yet...")
+                logger.info("⏳ No recordings yet...")
 
             if time.time() - start_time > timeout:
+                logger.error(f"Timeout waiting for transcript for bot {bot_id}")
                 raise TimeoutError("Transcript not ready in time")
 
-            print("⏳ Waiting...")
-
             sleep_time = min(10 + int((time.time() - start_time) / 60), 30)
+            logger.debug(f"Sleeping for {sleep_time} seconds...")
             time.sleep(sleep_time)

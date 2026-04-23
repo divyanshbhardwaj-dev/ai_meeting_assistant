@@ -1,48 +1,21 @@
-import requests
+import uvicorn
+from fastapi import FastAPI
+from app.api.routes import router
+from app.utils.logger import setup_logger
 
-from app.services.recall_ai_service import RecallService
-from app.config.settings import settings
+logger = setup_logger(__name__)
 
+app = FastAPI(title="Agentic Meeting Assistant")
 
-MEETING_URL = "https://meet.google.com/kkx-yhbd-dnc"
+app.include_router(router)
 
-def run():
-    recall = RecallService()
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting Agentic Meeting Assistant...")
 
-
-    print("🤖 Creating bot...")
-    bot = recall.create_bot(MEETING_URL)
-
-    print("\n✅ BOT CREATED:")
-    print(bot)
-
-    bot_id = bot.get("id")
-
-    print("\n🔍 Checking status...")
-    status = recall.get_bot(bot_id)
-
-    print("\n⏳ Waiting for recording to be ready...")
-    recordings = recall.wait_for_recording(bot_id)
-    print(recordings)
-
-    download_url = recall.wait_for_recording(bot_id)
-
-    transcript_url = recall.wait_for_recording(bot_id)
-
-    print("\n📥 Fetching transcript...")
-    response = requests.get(transcript_url)
-    transcript_data = response.json()
-
-    print("\n🧾 RAW TRANSCRIPT:")
-    print(transcript_data)
-
-    print("\n🎬 DOWNLOAD URL:")
-    print(download_url)
-
-
-    print("\n📊 BOT STATUS:")
-    print(status)
-
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
-    run()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
