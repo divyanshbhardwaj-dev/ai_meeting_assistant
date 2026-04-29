@@ -3,7 +3,6 @@ from app.config.settings import settings
 from app.processors.transcript_processor import TranscriptProcessor
 from app.utils.logger import setup_logger
 from app.ai_agents.prompts.openAI_transcript_analyzer_prompt import prompt as analyzer_prompt
-from app.ai_agents.test_transcript import test_transcript
 
 logger = setup_logger(__name__)
 
@@ -14,24 +13,36 @@ class OpenAITranscriptAnalyzer:
     @staticmethod
     def analyze(transcript: str) -> str:
 
+        # logger.info("original transcript length: %d characters", len(transcript))
+        # if transcript.strip():
+        #     print(transcript[:500])  # Print the first 500 characters of the original transcript for debugging
+        # else:
+        #     logger.warning("Transcript is empty or whitespace only.")
+
 
         logger.info("Starting analysis of transcript with OpenAI...")
+
         
         # Use the imported prompt and inject the transcript
         # Note: The prompt template uses {transcript} as the placeholder
-        formatted_transcript = TranscriptProcessor.format(test_transcript)
+        # org_transcript = TranscriptProcessor.format(transcript)
+        # formatted_transcript = TranscriptProcessor.format(test_transcript)
 
-        if not formatted_transcript.strip():
-            raise ValueError("Transcript is empty, skipping analysis")
+        
 
-        formatted_prompt = analyzer_prompt.replace("{transcript}", formatted_transcript)
+        # if not formatted_transcript.strip():
+        #     raise ValueError("Transcript is empty, skipping analysis")
 
-        print("FORMATTED TRANSCRIPT:\n", formatted_transcript)
+        formatted_prompt = analyzer_prompt.replace("{transcript}", transcript)
+
+        print("FORMATTED TRANSCRIPT:\n", transcript)
 
         try:
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "user", "content": formatted_prompt}],
+                messages=[{"role": "system", "content": "You are a strict JSON generator."},
+                          {"role": "user", "content": formatted_prompt}],
+                response_format={"type": "json_object"},
                 timeout=60
             )
             logger.info("OpenAI analysis completed successfully.")

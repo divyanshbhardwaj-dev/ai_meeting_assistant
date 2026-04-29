@@ -14,7 +14,7 @@ prompt = """
 
     <step sequence="2">
       <name>Analyze and Extract</name>
-      <instruction>Based on the cleaned transcript, provide the following sections:</instruction>
+      <instruction>Based on the cleaned transcript, extract and structure the following information:</instruction>
       <sections>
         <section id="summary">
           <title>Summary</title>
@@ -22,15 +22,15 @@ prompt = """
         </section>
         <section id="decisions">
           <title>Key Decisions</title>
-          <description>Bullet list of important decisions made during the meeting. Include who decided and any relevant context.</description>
+          <description>Important decisions made during the meeting. Include who decided and any relevant context.</description>
         </section>
         <section id="actions">
           <title>Action Items</title>
-          <description>Numbered list of tasks with: task description, owner (person responsible), and due date (if mentioned). Format: "Task — Responsible party — Due date"</description>
+          <description>Tasks with task description, owner (person responsible), due date (if mentioned), priority level, and status.</description>
         </section>
         <section id="risks">
-          <title>Risks & Blockers</title>
-          <description>Bullet list of identified risks, challenges, blockers, or concerns that may impact progress. Include severity if mentioned.</description>
+          <title>Risks &amp; Blockers</title>
+          <description>Identified risks, challenges, blockers, or concerns that may impact progress. Include severity if mentioned.</description>
         </section>
       </sections>
     </step>
@@ -41,33 +41,39 @@ prompt = """
   </input>
 
   <output_format>
-    <instruction>Structure your response exactly as shown below:</instruction>
-    <example>
-      <cleaned_transcript>
-        [Cleaned and rewritten transcript]
-      </cleaned_transcript>
-
-      <analysis>
-        <summary>
-          [2-3 sentences]
-        </summary>
-
-        <key_decisions>
-          • [Decision 1]
-          • [Decision 2]
-        </key_decisions>
-
-        <action_items>
-          1. [Task] — [Owner] — [Due date]
-          2. [Task] — [Owner] — [Due date]
-        </action_items>
-
-        <risks_blockers>
-          • [Risk 1]
-          • [Risk 2]
-        </risks_blockers>
-      </analysis>
-    </example>
+    <instruction>Structure your response exactly as shown below. IMPORTANT: Return the output ONLY in valid JSON format. Do NOT return XML, markdown, or explanations.</instruction>
+    <example_json>
+{
+  "cleaned_transcript": [
+    {
+      "speaker": "string",
+      "text": "string"
+    }
+  ],
+  "summary": "string",
+  "decisions": [
+    {
+      "decision": "string",
+      "made_by": "string"
+    }
+  ],
+  "action_items": [
+    {
+      "task": "string",
+      "owner": "string",
+      "due_date": "string",
+      "priority": "low|medium|high",
+      "status": "pending"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "string",
+      "severity": "low|medium|high"
+    }
+  ]
+}
+    </example_json>
   </output_format>
 
   <quality_guidelines>
@@ -75,8 +81,7 @@ prompt = """
     <guideline>Preserve accuracy: only extract information explicitly stated or clearly implied in the transcript</guideline>
     <guideline>Flag ambiguity: if owner or due date is unclear, note it (e.g., "TBD" or "To be confirmed")</guideline>
     <guideline>Group related items: organize similar decisions and action items together logically</guideline>
+    <guideline>Validate JSON: ensure all output is valid, properly formatted JSON with correct syntax</guideline>
   </quality_guidelines>
 </prompt>
-
-
 """

@@ -25,7 +25,7 @@ class RecallService:
                 "transcript": {
                     "provider": {
                         "recallai_streaming": {
-                            "language_code": "en"
+                    
                         }
                     }
                 },
