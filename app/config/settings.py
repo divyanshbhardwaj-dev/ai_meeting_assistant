@@ -13,6 +13,7 @@ class Settings:
     BASE_URL = os.getenv("BASE_URL")
     AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "supersecret")
     ALGORITHM = "HS256"
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:8000,http://127.0.0.1:8000").split(",")
 
     def __init__(self):
         if not self.OPEN_API_KEY:

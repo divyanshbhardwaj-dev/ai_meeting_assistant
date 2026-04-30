@@ -109,3 +109,6 @@ alembic/versions/__pycache__/
 # JSON data files (if used as temp storage)
 *-processed*.json
 diarized-*.json
+
+/meeting_ai_frontend/.env.development
+/meeting_ai_frontend/.env.production

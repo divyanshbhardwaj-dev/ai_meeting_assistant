@@ -7,6 +7,7 @@ from app.api.auth_router import router as auth_router
 from app.api.routes import router
 from app.api.transcription_router import router as transcription_router
 from app.utils.logger import setup_logger
+from app.config.settings import settings
 from fastapi.middleware.cors import CORSMiddleware
 
 logger = setup_logger(__name__)
@@ -16,7 +17,7 @@ app = FastAPI(title="Agentic Meeting Assistant")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for dev (frontend localhost)
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],  # IMPORTANT → allows OPTIONS
     allow_headers=["*"],
