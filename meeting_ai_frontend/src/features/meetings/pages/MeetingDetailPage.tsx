@@ -143,8 +143,8 @@ export default function MeetingDetailPage() {
                   <div className="space-y-1.5">
                     {participants.map((participant: any) => (
                       <div key={participant.id} className="flex items-center gap-2 group">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-[9px] font-semibold shadow-sm ring-2 ring-white">
+                        <div className="relative shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-[9px] font-semibold shadow-sm ring-2 ring-white">
                             {participant.name.split(" ")[0][0]}
                             {participant.name.split(" ")[1]?.[0] || ""}
                           </div>
@@ -220,7 +220,7 @@ export default function MeetingDetailPage() {
                 <div className="bg-white rounded-md shadow-sm border border-gray-100 p-3">
                   {meeting.summary ? (
                     <div className="space-y-3">
-                      <div className="relative p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded border border-blue-100">
+                      <div className="relative p-3 bg-linear-to-br from-blue-50 to-indigo-50 rounded border border-blue-100">
                         <div className="absolute top-0 left-0 w-0.5 h-full bg-blue-500 rounded-l" />
                         <h3 className="text-[11px] font-semibold text-blue-900 mb-1 flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-blue-500" />
@@ -239,7 +239,7 @@ export default function MeetingDetailPage() {
                           <ul className="space-y-1">
                             {meeting.key_decisions.map((decision: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-1 text-[11px] text-gray-700">
-                                <span className="mt-1 w-1 h-1 rounded-full bg-gray-400 flex-shrink-0" />
+                                <span className="mt-1 w-1 h-1 rounded-full bg-gray-400 shrink-0" />
                                 {decision}
                               </li>
                             ))}
@@ -264,8 +264,8 @@ export default function MeetingDetailPage() {
                   <div className="space-y-2">
                     {meeting.transcript_raw.map((item: any, idx: number) => (
                       <div key={idx} className="flex gap-2 p-1.5 -mx-1.5 rounded hover:bg-gray-50 transition-colors">
-                        <div className="flex-shrink-0">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-[9px] font-semibold shadow-sm">
+                        <div className="shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-[9px] font-semibold shadow-sm">
                             {item.participant.name.split(" ")[0][0]}
                           </div>
                         </div>
@@ -293,7 +293,7 @@ export default function MeetingDetailPage() {
                         className="bg-white rounded-md border border-gray-100 p-2.5 shadow-sm hover:shadow-md transition-all group"
                       >
                         <div className="flex items-start gap-2">
-                          <div className="flex-shrink-0 pt-0.5">
+                          <div className="shrink-0 pt-0.5">
                             <div className="w-3.5 h-3.5 rounded border border-gray-200 group-hover:border-blue-400 cursor-pointer transition-colors flex items-center justify-center">
                               {task.completed && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
                             </div>
