@@ -1,5 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+from app.api.auth_router import router as auth_router
 from app.api.routes import router
 from app.api.transcription_router import router as transcription_router
 from app.utils.logger import setup_logger
@@ -18,8 +22,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(router)
 app.include_router(transcription_router)
+
+# Serve Frontend
+frontend_path = os.path.join(os.getcwd(), "meeting_ai_frontend", "dist")
+
+if os.path.exists(frontend_path):
+    @app.get("/{catchall:path}")
+    async def serve_frontend(catchall: str = ""):
+        # 1. Try to serve exact file from dist
+        file_path = os.path.join(frontend_path, catchall)
+        if catchall and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # 2. Fallback to index.html for SPA routing
+        index_file = os.path.join(frontend_path, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        
+        return {"error": "Frontend not found"}
 
 @app.on_event("startup")
 async def startup_event():

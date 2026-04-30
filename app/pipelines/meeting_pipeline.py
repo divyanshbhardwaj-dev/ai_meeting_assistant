@@ -63,6 +63,10 @@ class MeetingPipeline:
 
             result_json = json.loads(result)
 
+            # save title
+            title = result_json.get("title", f"Meeting {meeting.id}")
+            meeting.title = title
+
             # Save summary
             summary = result_json.get("summary")
             meeting.summary = summary

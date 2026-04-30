@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import Meeting
+from app.dependencies.auth import get_current_user
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -11,11 +12,11 @@ router = APIRouter(prefix="/transcriptions", tags=["Transcriptions"])
 
 # ✅ Get formatted transcript
 @router.get("/{meeting_id}")
-def get_transcript(meeting_id: int, db: Session = Depends(get_db)):
-    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+def get_transcript(meeting_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id, Meeting.user_id == user.id).first()
 
     if not meeting:
-        return {"error": "Meeting not found"}
+        raise HTTPException(status_code=404, detail="Meeting not found or access denied")
 
     return {
         "meeting_id": meeting.id,
@@ -25,11 +26,11 @@ def get_transcript(meeting_id: int, db: Session = Depends(get_db)):
 
 # ✅ Get raw transcript JSON
 @router.get("/{meeting_id}/raw")
-def get_raw_transcript(meeting_id: int, db: Session = Depends(get_db)):
-    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+def get_raw_transcript(meeting_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id, Meeting.user_id == user.id).first()
 
     if not meeting:
-        return {"error": "Meeting not found"}
+        raise HTTPException(status_code=404, detail="Meeting not found or access denied")
 
     return {
         "meeting_id": meeting.id,

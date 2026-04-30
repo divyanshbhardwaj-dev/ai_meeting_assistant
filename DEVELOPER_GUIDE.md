@@ -78,6 +78,18 @@ python main.py
 # Visit http://localhost:8000/health
 ```
 
+#### 6. Frontend Setup (Optional)
+
+If you wish to serve the frontend from the backend:
+
+```bash
+cd meeting_ai_frontend
+npm install
+npm run build
+```
+
+The backend is configured to automatically serve the frontend from `meeting_ai_frontend/dist` if it exists.
+
 ### IDE Setup
 
 #### VS Code

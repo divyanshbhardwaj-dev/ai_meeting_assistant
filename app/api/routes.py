@@ -1,6 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
 from requests import Session
 from app.api.db_dependency import get_db
+from app.dependencies.auth import get_current_user
 from app.pipelines.meeting_pipeline import MeetingPipeline
 from app.schemas.meeting_schema import MeetingRequest
 from app.utils.logger import setup_logger
@@ -32,11 +33,12 @@ pipeline = MeetingPipeline()
 #     }
 
 
-@router.post("/meetings")
+@router.post("/inject-bot")
 def create_meeting(
     request: MeetingRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
 ):
     job_id = str(uuid.uuid4())
 
@@ -44,7 +46,8 @@ def create_meeting(
         meeting_url=request.meeting_url,
         status="processing",
         summary=None,
-        bot_id=None
+        bot_id=None,
+        user_id=user.id
     )
     db.add(meeting)
     db.commit()
@@ -85,47 +88,51 @@ def create_meeting(
     }
 
 
-@router.get("/meetings/{job_id}")
-def get_status(job_id: str):
-    job = jobs.get(job_id)
+# @router.get("/meetings/{job_id}")
+# def get_status(job_id: str):
+#     job = jobs.get(job_id)
 
-    if not job:
-        return {"error": "Job not found"}
+#     if not job:
+#         return {"error": "Job not found"}
 
-    return {
-        "job_id": job_id,
-        "status": job["status"]
-    }
+#     return {
+#         "job_id": job_id,
+#         "status": job["status"]
+#     }
 
 
 
-@router.get("/meetings/{job_id}/result")
-def get_result(job_id: str):
-    job = jobs.get(job_id)
+# @router.get("/meetings/{job_id}/result")
+# def get_result(job_id: str):
+#     job = jobs.get(job_id)
 
-    if not job:
-        return {"error": "Job not found"}
+#     if not job:
+#         return {"error": "Job not found"}
 
-    if job["status"] != "completed":
-        return {
-            "status": job["status"],
-            "message": "Result not ready yet"
-        }
+#     if job["status"] != "completed":
+#         return {
+#             "status": job["status"],
+#             "message": "Result not ready yet"
+#         }
 
-    return {
-        "status": "completed",
-        "result": job["result"]
-    }
+#     return {
+#         "status": "completed",
+#         "result": job["result"]
+#     }
 
 
 @router.get("/allmeetings")
-def get_meetings(db: Session = Depends(get_db)):
-    meetings = db.query(Meeting).order_by(Meeting.created_at.desc()).all()
+def get_meetings(
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
+):
+    return db.query(Meeting).filter(Meeting.user_id == user.id).all()
 
     return [
         {
             "id": m.id,
             "meeting_url": m.meeting_url,
+            "title": m.title,
             "status": m.status,
             "summary": m.summary,
             "created_at": m.created_at
@@ -135,7 +142,7 @@ def get_meetings(db: Session = Depends(get_db)):
 
 
 @router.get("/allmeetings/{meeting_id}")
-def get_meeting_detail(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_meeting_detail(meeting_id: int, db: Session = Depends(get_db)):
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
 
     if not meeting:
@@ -144,8 +151,11 @@ def get_meeting_detail(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
     return {
         "id": meeting.id,
         "meeting_url": meeting.meeting_url,
+        "title" : meeting.title,
         "status": meeting.status,
         "summary": meeting.summary,
+        "transcript_raw": meeting.transcript_raw,
+        "transcript_text": meeting.transcript_text,
         "tasks": [
             {
                 "id": t.id,

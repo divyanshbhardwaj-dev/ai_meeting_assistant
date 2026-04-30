@@ -11,6 +11,8 @@ class Settings:
     OPEN_API_KEY = os.getenv("OPEN_API_KEY")
     RECALL_API_KEY = os.getenv("RECALL_API_KEY")
     BASE_URL = os.getenv("BASE_URL")
+    AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "supersecret")
+    ALGORITHM = "HS256"
 
     def __init__(self):
         if not self.OPEN_API_KEY:

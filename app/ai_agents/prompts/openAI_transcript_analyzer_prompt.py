@@ -43,7 +43,7 @@ prompt = """
   <output_format>
     <instruction>Structure your response exactly as shown below. IMPORTANT: Return the output ONLY in valid JSON format. Do NOT return XML, markdown, or explanations.</instruction>
     <example_json>
-{
+{ "title": "string",
   "cleaned_transcript": [
     {
       "speaker": "string",

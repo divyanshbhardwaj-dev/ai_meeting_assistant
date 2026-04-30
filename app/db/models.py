@@ -10,6 +10,7 @@ class Meeting(Base):
     __tablename__ = "meetings"
 
     id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=True)
     meeting_url = Column(String)
     bot_id = Column(String, nullable=True)
 
@@ -20,6 +21,9 @@ class Meeting(Base):
 
     transcript_raw = Column(JSON)      # full Recall response
     transcript_text = Column(Text)     # formatted version
+
+    user_id = Column(UUID, ForeignKey("users.id"))
+    user = relationship("User")
 
     tasks = relationship("Task", back_populates="meeting")
 
@@ -47,3 +51,14 @@ class Task(Base):
     due_date = Column(String)
 
     meeting = relationship("Meeting", back_populates="tasks")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
