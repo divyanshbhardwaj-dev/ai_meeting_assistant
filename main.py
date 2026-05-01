@@ -4,11 +4,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from app.api.auth_router import router as auth_router
+from app.api.google_auth_router import router as google_auth_router 
 from app.api.routes import router
 from app.api.transcription_router import router as transcription_router
 from app.utils.logger import setup_logger
 from app.config.settings import settings
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.scheduler import start_scheduler
+
+
 
 logger = setup_logger(__name__)
 
@@ -23,9 +27,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(auth_router)
 app.include_router(router)
 app.include_router(transcription_router)
+app.include_router(google_auth_router)
 
 # Serve Frontend
 frontend_path = os.path.join(os.getcwd(), "meeting_ai_frontend", "dist")
@@ -48,6 +54,8 @@ if os.path.exists(frontend_path):
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting Agentic Meeting Assistant...")
+    start_scheduler()
+    logger.info("Scheduler started successfully.")
 
 @app.get("/health")
 def health_check():

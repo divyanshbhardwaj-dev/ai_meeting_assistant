@@ -15,24 +15,6 @@ router = APIRouter()
 pipeline = MeetingPipeline()
 
 
-# @router.post("/meetings/process")
-# def process_meeting(request: MeetingRequest, background_tasks: BackgroundTasks):
-#     logger.info(f"Received request to process meeting: {request.meeting_url}")
-#     def run_pipeline():
-#         try:
-#             pipeline.run(request.meeting_url)
-#             logger.info(f"Successfully processed meeting: {request.meeting_url}")
-#         except Exception as e:
-#             logger.error(f"Error processing meeting {request.meeting_url}: {str(e)}")
-
-#     background_tasks.add_task(run_pipeline)
-
-#     return {
-#         "status": "processing",
-#         "message": "Meeting processing started"
-#     }
-
-
 @router.post("/inject-bot")
 def create_meeting(
     request: MeetingRequest,
@@ -126,19 +108,8 @@ def get_meetings(
     db: Session = Depends(get_db),
     user = Depends(get_current_user)
 ):
-    return db.query(Meeting).filter(Meeting.user_id == user.id).all()
-
-    return [
-        {
-            "id": m.id,
-            "meeting_url": m.meeting_url,
-            "title": m.title,
-            "status": m.status,
-            "summary": m.summary,
-            "created_at": m.created_at
-        }
-        for m in meetings
-    ]
+    meetings = db.query(Meeting).filter(Meeting.user_id == user.id).all()
+    return meetings
 
 
 @router.get("/allmeetings/{meeting_id}")

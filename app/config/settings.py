@@ -15,6 +15,10 @@ class Settings:
     ALGORITHM = "HS256"
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:8000,http://127.0.0.1:8000").split(",")
 
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+
     def __init__(self):
         if not self.OPEN_API_KEY:
             logger.warning("OPEN_API_KEY is not set in environment variables.")
@@ -22,5 +26,9 @@ class Settings:
             logger.warning("RECALL_API_KEY is not set in environment variables.")
         if not self.BASE_URL:
             logger.warning("BASE_URL is not set in environment variables.")
+        if not self.GOOGLE_CLIENT_ID:
+            logger.warning("GOOGLE_CLIENT_ID is not set in environment variables.")
+        if not self.GOOGLE_CLIENT_SECRET:
+            logger.warning("GOOGLE_CLIENT_SECRET is not set in environment variables.")
 
 settings = Settings()

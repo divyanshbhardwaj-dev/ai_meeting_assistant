@@ -27,6 +27,8 @@ class Meeting(Base):
 
     tasks = relationship("Task", back_populates="meeting")
 
+    google_event_id = Column(String, unique=True)
+
 class Participant(Base):
     __tablename__ = "participants"
 
@@ -60,5 +62,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    google_access_token = Column(String)
+    google_refresh_token = Column(String)
 
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -65,6 +65,10 @@ Create `.env` file in project root:
 OPEN_API_KEY=sk-proj-your-key-here
 RECALL_API_KEY=your-recall-key-here
 BASE_URL=https://api.recall.ai/api
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
 ```
 
 #### 5. Verify Installation
@@ -871,7 +875,51 @@ Fixes #123
 
 ---
 
-**Document Version**: 1.0.0  
-**Last Updated**: April 28, 2026
+## Google Calendar Setup
 
-For more details, see [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md)
+To enable automatic meeting joining from Google Calendar, follow these steps to configure your own Google Cloud project:
+
+### 1. Create a Google Cloud Project
+1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2.  Create a new project (e.g., "Meeting Assistant").
+
+### 2. Enable Google Calendar API
+1.  In the sidebar, go to **APIs & Services > Library**.
+2.  Search for "Google Calendar API" and click **Enable**.
+
+### 3. Configure OAuth Consent Screen
+1.  Go to **APIs & Services > OAuth consent screen**.
+2.  Choose **User Type: External** and click **Create**.
+3.  Fill in the required App information.
+4.  In the **Scopes** section, add the following scopes:
+    *   `.../auth/calendar.readonly`
+    *   `.../auth/calendar.events`
+    *   `.../auth/userinfo.email`
+    *   `openid`
+5.  Add your own email as a **Test User** (since the app is in Testing mode).
+
+### 4. Create OAuth 2.0 Credentials
+1.  Go to **APIs & Services > Credentials**.
+2.  Click **Create Credentials > OAuth client ID**.
+3.  Select **Application type: Web application**.
+4.  Add **Authorized redirect URIs**: `http://localhost:8000/auth/google/callback`.
+5.  Click **Create** and copy your **Client ID** and **Client Secret**.
+
+### 5. Update Environment Variables
+Add the credentials to your `.env` file:
+```bash
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+```
+
+### 6. Connect your Account
+1.  Ensure you are logged in to the Meeting Assistant application.
+2.  Navigate to `http://localhost:8000/auth/google/login`.
+3.  Follow the Google authorization flow.
+4.  Once redirected back with a "Google connected" message, the scheduler will automatically scan your calendar every 2 minutes and join any upcoming meetings with a valid link.
+
+---
+
+**Document Version**: 1.1.0  
+**Last Updated**: April 30, 2026

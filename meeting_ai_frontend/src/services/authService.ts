@@ -31,5 +31,9 @@ export const authService = {
 
   isAuthenticated() {
     return !!this.getToken();
+  },
+
+  async getGoogleAuthUrl() {
+    return apiClient("/auth/google/login");
   }
 };

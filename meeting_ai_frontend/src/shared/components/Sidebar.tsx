@@ -1,16 +1,30 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, Plus, Calendar, CheckSquare, Settings, LogOut, Zap } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Plus, Calendar, CheckSquare, Settings, LogOut, Zap, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import JoinMeetingModal from "../../features/meetings/components/JoinMeetingModal";
 import { authService } from "../../services/authService";
+import { apiClient } from "../../services/apiClient";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["main", "resources"])
   );
+
+  useEffect(() => {
+    const checkGoogleStatus = async () => {
+      try {
+        const data = await apiClient("/auth/google/status");
+        setIsGoogleConnected(data.is_connected);
+      } catch (err) {
+        console.error("Failed to check Google status", err);
+      }
+    };
+    checkGoogleStatus();
+  }, []);
 
   const toggleSection = (section: string) => {
     const newSet = new Set(expandedSections);
@@ -31,6 +45,7 @@ export default function Sidebar() {
 
   const navItems = [
     { path: "/", label: "Meetings", icon: Calendar },
+    { path: "/calendar", label: "Google Calendar", icon: Zap },
     { path: "/action-items", label: "Action Items", icon: CheckSquare },
   ];
 
@@ -90,7 +105,10 @@ export default function Sidebar() {
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span className="text-xs font-medium">{label}</span>
-                    {isActive(path) && (
+                    {label === "Google Calendar" && isGoogleConnected && (
+                      <CheckCircle2 className="ml-auto w-3 h-3 text-green-400" />
+                    )}
+                    {isActive(path) && label !== "Google Calendar" && (
                       <div className="ml-auto w-1 h-1 bg-blue-400 rounded-full" />
                     )}
                   </Link>
