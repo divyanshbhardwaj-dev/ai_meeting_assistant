@@ -66,17 +66,33 @@ def exchange_code(
 
         access_token = tokens.get("access_token")
         refresh_token = tokens.get("refresh_token")
+        expires_in = tokens.get("expires_in") # seconds
         
+        expires_at = None
+        if expires_in:
+            from datetime import datetime, timedelta
+            expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+
         if not access_token:
             logger.error("No access token received from Google")
             raise HTTPException(status_code=400, detail="No access token received")
+
+        # Fetch profile info immediately to cache it
+        profile_response = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        profile = profile_response.json() if profile_response.status_code == 200 else {}
 
         logger.info(f"Google tokens fetched successfully. Refresh token present: {bool(refresh_token)}")
 
         # Manual update to ensure persistence
         db.query(User).filter(User.id == user.id).update({
             "google_access_token": access_token,
-            "google_refresh_token": refresh_token if refresh_token else User.google_refresh_token
+            "google_refresh_token": refresh_token if refresh_token else User.google_refresh_token,
+            "google_token_expires_at": expires_at,
+            "google_profile_name": profile.get("name"),
+            "google_profile_picture": profile.get("picture")
         })
         
         db.commit()

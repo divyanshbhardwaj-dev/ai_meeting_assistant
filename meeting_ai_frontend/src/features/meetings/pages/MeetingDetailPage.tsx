@@ -48,9 +48,7 @@ export default function MeetingDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const participants = Array.from(
-    new Map(meeting.transcript_raw.map((item: any) => [item.participant.id, item.participant])).values()
-  ) as any[];
+  const participants = meeting.participants || [];
 
   const statusConfig: Record<string, { label: string; color: string; bg: string; dot: string }> = {
     completed: { label: "Completed", color: "text-emerald-800", bg: "bg-emerald-50", dot: "bg-emerald-500" },
@@ -60,7 +58,7 @@ export default function MeetingDetailPage() {
   };
 
   const status = statusConfig[meeting.status] || statusConfig.pending;
-  const meetingDate = new Date(meeting.transcript_raw[0]?.words[0]?.start_timestamp?.absolute || Date.now());
+  const meetingDate = new Date(meeting.created_at || Date.now());
 
   const tabItems = [
     { id: "summary", label: "Summary", icon: FileText },
@@ -295,20 +293,20 @@ export default function MeetingDetailPage() {
                         <div className="flex items-start gap-2">
                           <div className="shrink-0 pt-0.5">
                             <div className="w-3.5 h-3.5 rounded border border-gray-200 group-hover:border-blue-400 cursor-pointer transition-colors flex items-center justify-center">
-                              {task.completed && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
+                              {task.is_completed && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-[11px] font-semibold text-gray-900 mb-0.5">{task.task}</h4>
+                            <h4 className={`text-[11px] font-semibold mb-0.5 ${task.is_completed ? "text-gray-400 line-through" : "text-gray-900"}`}>{task.task}</h4>
                             <div className="flex flex-wrap items-center gap-1 text-[10px]">
                               <span className="flex items-center gap-0.5 text-gray-500">
-                                <Users className="w-2.5 h-2.5" /> {task.owner}
+                                <Users className="w-2.5 h-2.5" /> {task.owner || "Unassigned"}
                               </span>
-                              {task.due_date !== "TBD" && (
+                              {task.due_date && (
                                 <>
                                   <span className="text-gray-300">•</span>
                                   <span className="flex items-center gap-0.5 text-gray-500">
-                                    <Calendar className="w-2.5 h-2.5" /> {task.due_date}
+                                    <Calendar className="w-2.5 h-2.5" /> {new Date(task.due_date).toLocaleDateString()}
                                   </span>
                                 </>
                               )}

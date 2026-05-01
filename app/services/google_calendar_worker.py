@@ -69,6 +69,7 @@ def process_calendar_events():
                         status="processing",
                         user_id=user.id,
                         google_event_id=event_id,
+                        google_event_data=event, # 🔥 Store full event JSON
                         title=summary
                     )
 

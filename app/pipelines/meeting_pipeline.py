@@ -5,9 +5,9 @@ from app.processors.transcript_processor import TranscriptProcessor
 from app.ai_agents.openAI_transcript_analyzer import OpenAITranscriptAnalyzer 
 from app.utils.logger import setup_logger
 import json
-from app.db.models import Meeting, Task
+from app.db.models import Meeting, Task, Participant
 from sqlalchemy.orm import Session
-from app.ai_agents.test_transcript import test_transcript
+from datetime import datetime
 
 logger = setup_logger(__name__)
 
@@ -16,6 +16,48 @@ class MeetingPipeline:
     def __init__(self):
         self.recall = RecallService()
 
+    def parse_iso_date(self, date_str):
+        if not date_str:
+            return None
+        try:
+            # Handle YYYY-MM-DD or full ISO
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            logger.warning(f"Failed to parse date string: {date_str}")
+            return None
+
+    def save_participants(self, db, meeting, transcript_json):
+        # Unique participants from transcript
+        transcript_names = set()
+        for block in transcript_json:
+            name = block.get("participant", {}).get("name")
+            if name:
+                transcript_names.add(name)
+        
+        # Get attendee map from Google Calendar data if available
+        attendee_map = {}
+        if meeting.google_event_data and "attendees" in meeting.google_event_data:
+            for attendee in meeting.google_event_data["attendees"]:
+                a_name = attendee.get("displayName") or attendee.get("email", "").split("@")[0]
+                a_email = attendee.get("email")
+                if a_name and a_email:
+                    attendee_map[a_name.lower()] = a_email
+
+        logger.info(f"Cross-referencing {len(transcript_names)} names with {len(attendee_map)} calendar attendees")
+
+        for name in transcript_names:
+            # Try to find email in calendar data
+            email = attendee_map.get(name.lower())
+            
+            participant = Participant(
+                meeting_id=meeting.id,
+                name=name,
+                email=email,
+                is_organizer="False"
+            )
+            db.add(participant)
+        
+        db.commit()
 
     def save_tasks(self, db, meeting_id, tasks):
         for t in tasks:
@@ -24,7 +66,7 @@ class MeetingPipeline:
                 task=t.get("task"),
                 owner_name=t.get("owner"),
                 priority=t.get("priority", "medium"),
-                due_date=t.get("due_date"),
+                due_date=self.parse_iso_date(t.get("due_date")),
             )
             db.add(task)
 
@@ -49,14 +91,19 @@ class MeetingPipeline:
             logger.info("📥 Fetching transcript...")
             transcript_json = requests.get(transcript_url).json()
 
-            meeting.transcript_raw = test_transcript
+            # ✅ Use actual transcript data
+            meeting.transcript_raw = transcript_json
             db.commit()
 
             logger.info("🧾 Formatting transcript...")
-            formatted = TranscriptProcessor.format(test_transcript)
+            formatted = TranscriptProcessor.format(transcript_json)
 
             meeting.transcript_text = formatted
             db.commit()
+
+            # ✅ Save Participants
+            logger.info("👥 Saving participants...")
+            self.save_participants(db, meeting, transcript_json)
 
             logger.info("🧠 Running AI analysis...")
             result = OpenAITranscriptAnalyzer.analyze(formatted)
