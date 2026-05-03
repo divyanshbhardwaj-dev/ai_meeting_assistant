@@ -1,7 +1,7 @@
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from app.config.settings import settings
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 from app.utils.logger import setup_logger
 
@@ -29,7 +29,7 @@ def get_calendar_events(user):
             maxResults=10,
             singleEvents=True,
             orderBy="startTime",
-            timeMin=datetime.utcnow().isoformat() + "Z"
+            timeMin=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         ).execute()
 
         return events.get("items", [])

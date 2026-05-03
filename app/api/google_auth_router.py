@@ -70,8 +70,8 @@ def exchange_code(
         
         expires_at = None
         if expires_in:
-            from datetime import datetime, timedelta
-            expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            from datetime import datetime, timedelta, timezone
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
         if not access_token:
             logger.error("No access token received from Google")
@@ -111,6 +111,26 @@ def exchange_code(
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
     finally:
         logger.info(f"--- END TOKEN EXCHANGE ---")
+
+@router.post("/disconnect")
+def disconnect_google(
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
+):
+    try:
+        db.query(User).filter(User.id == user.id).update({
+            "google_access_token": None,
+            "google_refresh_token": None,
+            "google_token_expires_at": None,
+            "google_profile_name": None,
+            "google_profile_picture": None
+        })
+        db.commit()
+        return {"message": "Google Calendar disconnected successfully"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error disconnecting Google for user {user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to disconnect Google Calendar")
 
 @router.get("/status")
 def get_google_status(user=Depends(get_current_user)):

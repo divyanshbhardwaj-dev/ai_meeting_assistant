@@ -108,7 +108,7 @@ def get_meetings(
     db: Session = Depends(get_db),
     user = Depends(get_current_user)
 ):
-    meetings = db.query(Meeting).filter(Meeting.user_id == user.id).all()
+    meetings = db.query(Meeting).filter(Meeting.user_id == user.id).order_by(Meeting.created_at.desc()).all()
     return meetings
 
 

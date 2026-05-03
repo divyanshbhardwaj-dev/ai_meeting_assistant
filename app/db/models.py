@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import relationship
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from .database import Base
 
 
@@ -17,8 +17,8 @@ class Meeting(Base):
     status = Column(String, default="pending")
     summary = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     transcript_raw = Column(JSON)      # full Recall response
     transcript_text = Column(Text)     # formatted version
@@ -40,10 +40,11 @@ class Participant(Base):
 
     name = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    recall_id = Column(String, nullable=True)  # Unique ID from Recall.ai
     is_organizer = Column(String, default=False)
     avatar_url = Column(String, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     meeting = relationship("Meeting", back_populates="participants")
 
 class Task(Base):
@@ -56,11 +57,11 @@ class Task(Base):
     task = Column(String, nullable=False)
     owner_name = Column(String, nullable=True)
     priority = Column(String, default="medium")
-    due_date = Column(DateTime, nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     is_completed = Column(Integer, default=0) # Using Integer as boolean for SQLite/generic compat if needed, but standard is Column(Boolean)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     meeting = relationship("Meeting", back_populates="tasks")
 
@@ -75,11 +76,11 @@ class User(Base):
     
     google_access_token = Column(String)
     google_refresh_token = Column(String)
-    google_token_expires_at = Column(DateTime)
+    google_token_expires_at = Column(DateTime(timezone=True))
     google_profile_name = Column(String)
     google_profile_picture = Column(String)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     meetings = relationship("Meeting", back_populates="user")
