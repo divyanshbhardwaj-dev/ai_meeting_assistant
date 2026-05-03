@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../../../services/authService";
-import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  Loader2,
+  ArrowRight,
+  AlertCircle,
+} from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -42,14 +50,20 @@ export default function LoginPage() {
         {/* Logo/Header */}
         <div className="text-center mb-12 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/50">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold bg-linear-to-r from-blue-300 via-blue-200 to-cyan-300 bg-clip-text text-transparent mb-2">
             MeetingAI
           </h1>
-          <p className="text-blue-200/60 text-sm">Welcome back to your workspace</p>
+          <p className="text-blue-200/60 text-sm">
+            Welcome back to your workspace
+          </p>
         </div>
 
         {/* Form Card */}
@@ -65,7 +79,10 @@ export default function LoginPage() {
 
             {/* Email Input */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-slate-300"
+              >
                 Email Address
               </label>
               <div className="relative group">
@@ -86,7 +103,10 @@ export default function LoginPage() {
             {/* Password Input */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-300"
+                >
                   Password
                 </label>
                 <Link
@@ -115,7 +135,11 @@ export default function LoginPage() {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 transition-colors disabled:opacity-50"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -176,7 +200,10 @@ export default function LoginPage() {
         {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-8">
           By signing in, you agree to our{" "}
-          <Link to="/terms" className="text-slate-400 hover:text-slate-300 underline">
+          <Link
+            to="/terms"
+            className="text-slate-400 hover:text-slate-300 underline"
+          >
             Terms of Service
           </Link>
         </p>

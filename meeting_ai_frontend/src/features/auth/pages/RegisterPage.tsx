@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../../../services/authService";
-import { Eye, EyeOff, Mail, Lock, User, Loader2, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Loader2,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -27,8 +37,10 @@ export default function RegisterPage() {
   const validateForm = () => {
     if (!formData.name.trim()) return "Please enter your name";
     if (!formData.email.includes("@")) return "Please enter a valid email";
-    if (formData.password.length < 8) return "Password must be at least 8 characters";
-    if (formData.password !== formData.confirmPassword) return "Passwords do not match";
+    if (formData.password.length < 8)
+      return "Password must be at least 8 characters";
+    if (formData.password !== formData.confirmPassword)
+      return "Passwords do not match";
     if (!agreeToTerms) return "You must agree to the terms and conditions";
     return null;
   };
@@ -67,7 +79,8 @@ export default function RegisterPage() {
     agreeToTerms &&
     !isLoading;
 
-  const passwordMatch = formData.password === formData.confirmPassword && formData.password;
+  const passwordMatch =
+    formData.password === formData.confirmPassword && formData.password;
   const passwordStrong = formData.password.length >= 8;
 
   return (
@@ -75,7 +88,10 @@ export default function RegisterPage() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -right-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div
+          className="absolute -bottom-1/2 -left-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
       </div>
 
       {/* Main container */}
@@ -83,14 +99,20 @@ export default function RegisterPage() {
         {/* Logo/Header */}
         <div className="text-center mb-12 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-linear-to-br from-purple-500 to-blue-600 rounded-2xl mb-4 shadow-lg shadow-purple-500/50">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold bg-linear-to-r from-purple-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent mb-2">
             MeetingAI
           </h1>
-          <p className="text-purple-200/60 text-sm">Join thousands of teams using intelligent meeting insights</p>
+          <p className="text-purple-200/60 text-sm">
+            Join thousands of teams using intelligent meeting insights
+          </p>
         </div>
 
         {/* Success State */}
@@ -98,7 +120,10 @@ export default function RegisterPage() {
           <div className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl shadow-purple-500/20 text-center animate-fadeIn">
             <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-slate-100 mb-2">Welcome!</h2>
-            <p className="text-slate-400 mb-6">Your account has been created successfully. Redirecting to login...</p>
+            <p className="text-slate-400 mb-6">
+              Your account has been created successfully. Redirecting to
+              login...
+            </p>
             <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
               <div className="h-full bg-linear-to-r from-purple-500 to-blue-500 animate-pulse" />
             </div>
@@ -119,7 +144,10 @@ export default function RegisterPage() {
 
               {/* Name Input */}
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium text-slate-300">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-slate-300"
+                >
                   Full Name
                 </label>
                 <div className="relative group">
@@ -140,7 +168,10 @@ export default function RegisterPage() {
 
               {/* Email Input */}
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-slate-300"
+                >
                   Email Address
                 </label>
                 <div className="relative group">
@@ -161,7 +192,10 @@ export default function RegisterPage() {
 
               {/* Password Input */}
               <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-300"
+                >
                   Password
                 </label>
                 <div className="relative group">
@@ -183,22 +217,34 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 transition-colors disabled:opacity-50"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <div className={`h-1 flex-1 rounded-full transition-colors ${
-                    passwordStrong ? "bg-emerald-500" : "bg-slate-700"
-                  }`} />
+                  <div
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      passwordStrong ? "bg-emerald-500" : "bg-slate-700"
+                    }`}
+                  />
                   <span className="text-xs text-slate-400">
-                    {formData.password.length === 0 ? "0" : formData.password.length}+ chars
+                    {formData.password.length === 0
+                      ? "0"
+                      : formData.password.length}
+                    + chars
                   </span>
                 </div>
               </div>
 
               {/* Confirm Password Input */}
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-slate-300"
+                >
                   Confirm Password
                 </label>
                 <div className="relative group">
@@ -220,12 +266,20 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 transition-colors disabled:opacity-50"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 {formData.confirmPassword && (
-                  <p className={`text-xs ${passwordMatch ? "text-emerald-400" : "text-red-400"}`}>
-                    {passwordMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
+                  <p
+                    className={`text-xs ${passwordMatch ? "text-emerald-400" : "text-red-400"}`}
+                  >
+                    {passwordMatch
+                      ? "✓ Passwords match"
+                      : "✗ Passwords do not match"}
                   </p>
                 )}
               </div>
@@ -241,11 +295,17 @@ export default function RegisterPage() {
                 />
                 <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
                   I agree to the{" "}
-                  <Link to="/terms" className="text-purple-400 hover:text-purple-300">
+                  <Link
+                    to="/terms"
+                    className="text-purple-400 hover:text-purple-300"
+                  >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link to="/privacy" className="text-purple-400 hover:text-purple-300">
+                  <Link
+                    to="/privacy"
+                    className="text-purple-400 hover:text-purple-300"
+                  >
                     Privacy Policy
                   </Link>
                 </span>
