@@ -1,5 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, Plus, Calendar, CheckSquare, Settings, LogOut, Zap, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  CheckSquare,
+  Settings,
+  LogOut,
+  Zap,
+  CheckCircle2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import JoinMeetingModal from "../../features/meetings/components/JoinMeetingModal";
 import { authService } from "../../services/authService";
@@ -10,9 +18,6 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["main", "resources"])
-  );
 
   useEffect(() => {
     const checkGoogleStatus = async () => {
@@ -25,16 +30,6 @@ export default function Sidebar() {
     };
     checkGoogleStatus();
   }, []);
-
-  const toggleSection = (section: string) => {
-    const newSet = new Set(expandedSections);
-    if (newSet.has(section)) {
-      newSet.delete(section);
-    } else {
-      newSet.add(section);
-    }
-    setExpandedSections(newSet);
-  };
 
   const handleLogout = () => {
     authService.logout();
@@ -51,107 +46,81 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="w-56 h-screen bg-linear-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-50 flex flex-col border-r border-slate-800 shadow-xl">
-        {/* Header – compact */}
-        <div className="px-3 pt-4 pb-3 border-b border-slate-800">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <div className="w-6 h-6 bg-linear-to-br from-blue-500 to-purple-600 rounded flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-white" />
+      <aside className="w-64 h-screen bg-white text-slate-900 flex flex-col border-r border-slate-200">
+        {/* Header */}
+        <div className="px-6 py-8">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+              <Zap className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-base font-bold bg-linear-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold tracking-tight text-slate-900">
               MeetingAI
             </h1>
           </div>
-          <p className="text-[10px] text-slate-400">Intelligent meeting insights</p>
         </div>
 
-        {/* New Meeting button – tighter */}
-        <div className="px-2 py-3 border-b border-slate-800">
+        {/* New Meeting button */}
+        <div className="px-4 mb-6">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded text-xs font-medium transition-all duration-200 shadow hover:shadow-blue-500/50 active:scale-95 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             New Meeting
           </button>
         </div>
 
-        {/* Navigation – reduced padding and gaps */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 space-y-8 overflow-y-auto">
           <div>
-            <button
-              onClick={() => toggleSection("main")}
-              className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors"
-            >
-              <span>Navigation</span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${
-                  expandedSections.has("main") ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {expandedSections.has("main") && (
-              <div className="mt-1 space-y-0.5">
-                {navItems.map(({ path, label, icon: Icon }) => (
-                  <Link
-                    key={path}
-                    to={path}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 group ${
-                      isActive(path)
-                        ? "bg-slate-800 text-blue-400 shadow-lg shadow-blue-500/20"
-                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/50"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-xs font-medium">{label}</span>
-                    {label === "Google Calendar" && isGoogleConnected && (
-                      <CheckCircle2 className="ml-auto w-3 h-3 text-green-400" />
-                    )}
-                    {isActive(path) && label !== "Google Calendar" && (
-                      <div className="ml-auto w-1 h-1 bg-blue-400 rounded-full" />
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
+            <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Main Menu
+            </div>
+            <div className="space-y-1">
+              {navItems.map(({ path, label, icon: Icon }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group ${
+                    isActive(path)
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${isActive(path) ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  />
+                  <span className="text-sm font-medium">{label}</span>
+                  {label === "Google Calendar" && isGoogleConnected && (
+                    <CheckCircle2 className="ml-auto w-3.5 h-3.5 text-emerald-500" />
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-4">
-            <button
-              onClick={() => toggleSection("recent")}
-              className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors"
-            >
-              <span>Recent</span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${
-                  expandedSections.has("recent") ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {expandedSections.has("recent") && (
-              <div className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
-                <p className="text-[10px] text-slate-500 px-2 py-1">
-                  No recent meetings
-                </p>
-              </div>
-            )}
+          <div>
+            <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Recent Activity
+            </div>
+            <p className="text-xs text-slate-500 px-3 italic">
+              No recent meetings
+            </p>
           </div>
         </nav>
 
-        {/* Footer – compact buttons */}
-        <div className="px-2 py-3 border-t border-slate-800 space-y-0.5">
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 text-slate-400 hover:text-slate-300 hover:bg-slate-800/50 rounded-md transition-all duration-200">
-            <Settings className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-xs font-medium">Settings</span>
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 space-y-1">
+          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all duration-200 group">
+            <Settings className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-slate-600" />
+            <span className="text-sm font-medium">Settings</span>
           </button>
-          <button 
+          <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group"
           >
-            <LogOut className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-xs font-medium">Logout</span>
+            <LogOut className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-red-500" />
+            <span className="text-sm font-medium">Logout</span>
           </button>
         </div>
       </aside>

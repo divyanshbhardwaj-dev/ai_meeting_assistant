@@ -108,7 +108,7 @@ def get_meetings(
     db: Session = Depends(get_db),
     user = Depends(get_current_user)
 ):
-    meetings = db.query(Meeting).filter(Meeting.user_id == user.id).all()
+    meetings = db.query(Meeting).filter(Meeting.user_id == user.id).order_by(Meeting.created_at.desc()).all()
     return meetings
 
 
@@ -127,15 +127,31 @@ def get_meeting_detail(meeting_id: int, db: Session = Depends(get_db)):
         "summary": meeting.summary,
         "transcript_raw": meeting.transcript_raw,
         "transcript_text": meeting.transcript_text,
+        "created_at": meeting.created_at,
+        "updated_at": meeting.updated_at,
         "tasks": [
             {
                 "id": t.id,
                 "task": t.task,
                 "owner": t.owner_name,
                 "priority": t.priority,
-                "due_date": t.due_date
+                "due_date": t.due_date,
+                "is_completed": bool(t.is_completed),
+                "created_at": t.created_at,
+                "updated_at": t.updated_at
             }
             for t in meeting.tasks
+        ],
+        "participants": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "email": p.email,
+                "is_organizer": p.is_organizer,
+                "avatar_url": p.avatar_url,
+                "created_at": p.created_at
+            }
+            for p in meeting.participants
         ]
     }
 
@@ -163,21 +179,25 @@ def get_tasks(
             "owner": t.owner_name,
             "priority": t.priority,
             "due_date": t.due_date,
-            "meeting_id": t.meeting_id
+            "is_completed": bool(t.is_completed),
+            "meeting_id": t.meeting_id,
+            "created_at": t.created_at
         }
         for t in tasks
     ]
 
 @router.get("/meetings/{meeting_id}/tasks")
-def get_meeting_tasks(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_meeting_tasks(meeting_id: int, db: Session = Depends(get_db)):
     tasks = db.query(Task).filter(Task.meeting_id == meeting_id).all()
 
     return [
         {
+            "id": t.id,
             "task": t.task,
             "owner": t.owner_name,
             "priority": t.priority,
-            "due_date": t.due_date
+            "due_date": t.due_date,
+            "is_completed": bool(t.is_completed)
         }
         for t in tasks
     ]

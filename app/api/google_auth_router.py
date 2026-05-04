@@ -66,17 +66,33 @@ def exchange_code(
 
         access_token = tokens.get("access_token")
         refresh_token = tokens.get("refresh_token")
+        expires_in = tokens.get("expires_in") # seconds
         
+        expires_at = None
+        if expires_in:
+            from datetime import datetime, timedelta, timezone
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+
         if not access_token:
             logger.error("No access token received from Google")
             raise HTTPException(status_code=400, detail="No access token received")
+
+        # Fetch profile info immediately to cache it
+        profile_response = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        profile = profile_response.json() if profile_response.status_code == 200 else {}
 
         logger.info(f"Google tokens fetched successfully. Refresh token present: {bool(refresh_token)}")
 
         # Manual update to ensure persistence
         db.query(User).filter(User.id == user.id).update({
             "google_access_token": access_token,
-            "google_refresh_token": refresh_token if refresh_token else User.google_refresh_token
+            "google_refresh_token": refresh_token if refresh_token else User.google_refresh_token,
+            "google_token_expires_at": expires_at,
+            "google_profile_name": profile.get("name"),
+            "google_profile_picture": profile.get("picture")
         })
         
         db.commit()
@@ -95,6 +111,26 @@ def exchange_code(
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
     finally:
         logger.info(f"--- END TOKEN EXCHANGE ---")
+
+@router.post("/disconnect")
+def disconnect_google(
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
+):
+    try:
+        db.query(User).filter(User.id == user.id).update({
+            "google_access_token": None,
+            "google_refresh_token": None,
+            "google_token_expires_at": None,
+            "google_profile_name": None,
+            "google_profile_picture": None
+        })
+        db.commit()
+        return {"message": "Google Calendar disconnected successfully"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error disconnecting Google for user {user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to disconnect Google Calendar")
 
 @router.get("/status")
 def get_google_status(user=Depends(get_current_user)):

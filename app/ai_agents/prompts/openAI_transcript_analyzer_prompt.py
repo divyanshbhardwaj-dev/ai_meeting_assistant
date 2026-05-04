@@ -26,7 +26,7 @@ prompt = """
         </section>
         <section id="actions">
           <title>Action Items</title>
-          <description>Tasks with task description, owner (person responsible), due date (if mentioned), priority level, and status.</description>
+          <description>Tasks with task description, owner (person responsible), due date (formatted as ISO 8601 YYYY-MM-DD if mentioned, otherwise null), priority level, and status.</description>
         </section>
         <section id="risks">
           <title>Risks &amp; Blockers</title>
