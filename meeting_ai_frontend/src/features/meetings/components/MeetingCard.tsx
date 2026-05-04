@@ -107,7 +107,7 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
       {/* Context Menu Dropdown */}
       {showMenu && (
         <div
-          className="absolute top-12 right-4 bg-white border border-slate-200 rounded-xl shadow-xl z-10 min-w-[120px] py-1"
+          className="absolute top-12 right-4 bg-white border border-slate-200 rounded-xl shadow-xl z-10 min-w-30 py-1"
           onClick={(e) => e.stopPropagation()}
         >
           <button className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">

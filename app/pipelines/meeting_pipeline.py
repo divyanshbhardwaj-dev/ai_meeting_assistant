@@ -43,14 +43,22 @@ class MeetingPipeline:
         if not meeting.google_event_data and meeting.user and meeting.user.google_access_token:
             try:
                 from app.services.google_calendar_service import get_calendar_events
+                from sqlalchemy.exc import IntegrityError
                 events = get_calendar_events(meeting.user)
                 for event in events:
                     if event.get("hangoutLink") == meeting.meeting_url:
-                        meeting.google_event_id = event.get("id")
-                        meeting.google_event_data = event
-                        db.commit()
-                        logger.info(f"Dynamically found matching Google event for meeting {meeting.id}")
-                        break
+                        try:
+                            meeting.google_event_id = event.get("id")
+                            meeting.google_event_data = event
+                            db.commit()
+                            logger.info(f"Dynamically found matching Google event for meeting {meeting.id}")
+                            break
+                        except IntegrityError:
+                            db.rollback()
+                            logger.warning(f"Google event {event.get('id')} already linked to another meeting. Skipping dynamic fetch for meeting {meeting.id}.")
+                            meeting.google_event_id = None
+                            meeting.google_event_data = None
+                            break
             except Exception as e:
                 logger.error(f"Failed to dynamically fetch calendar data: {str(e)}")
 
@@ -146,7 +154,7 @@ class MeetingPipeline:
             meeting_url = meeting.meeting_url
 
             logger.info(f"🤖 Creating bot for URL: {meeting_url}")
-            bot = self.recall.create_bot(meeting_url)
+            bot = self.recall.create_bot(meeting_url, meeting.id)
 
             bot_id = bot["id"]
 
@@ -190,6 +198,15 @@ class MeetingPipeline:
             meeting.status = "completed"
             db.commit()
 
+            # Broadcast status update via WebSocket
+            try:
+                from app.api.ws_router import manager
+                import asyncio
+                # Since this is a synchronous method running in a thread, we use asyncio.run
+                asyncio.run(manager.broadcast(meeting.id, {"type": "status_update", "status": "completed"}))
+            except Exception as ws_err:
+                logger.error(f"Failed to broadcast status update: {ws_err}")
+
             # Save tasks
             self.save_tasks(db, meeting.id, result_json.get("action_items", []))
 
@@ -200,6 +217,14 @@ class MeetingPipeline:
 
             meeting.status = "failed"
             db.commit()
+            
+            # Broadcast status update via WebSocket
+            try:
+                from app.api.ws_router import manager
+                import asyncio
+                asyncio.run(manager.broadcast(meeting.id, {"type": "status_update", "status": "failed"}))
+            except Exception as ws_err:
+                logger.error(f"Failed to broadcast failure status update: {ws_err}")
 
             raise
     

@@ -127,6 +127,7 @@ def get_meeting_detail(meeting_id: int, db: Session = Depends(get_db)):
         "summary": meeting.summary,
         "transcript_raw": meeting.transcript_raw,
         "transcript_text": meeting.transcript_text,
+        "transcript": meeting.transcript, # Include real-time transcript column
         "created_at": meeting.created_at,
         "updated_at": meeting.updated_at,
         "tasks": [

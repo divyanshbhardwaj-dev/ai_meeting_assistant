@@ -1,6 +1,7 @@
 import requests
 from app.config.settings import settings
 import time
+import json
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -15,7 +16,7 @@ class RecallService:
         }
 
     # 1. Create bot (join meeting)
-    def create_bot(self, meeting_url: str, bot_name: str = "AI Note Taker"):
+    def create_bot(self, meeting_url: str, meeting_id: int, bot_name: str = "AI Note Taker"):
         url = f"{self.base_url}/bot/"
 
         payload = {
@@ -25,7 +26,8 @@ class RecallService:
                 "transcript": {
                     "provider": {
                         "recallai_streaming": {
-                    
+                            "mode": "prioritize_low_latency",
+                            "language_code": "en"
                         }
                     }
                 },
@@ -33,6 +35,24 @@ class RecallService:
                 "meeting_metadata": {}
             }
         }
+        
+        # Only add webhook_url if it's a valid public URL (not localhost)
+        if settings.APP_PUBLIC_URL and "localhost" not in settings.APP_PUBLIC_URL and "127.0.0.1" not in settings.APP_PUBLIC_URL:
+            webhook_url = f"{settings.APP_PUBLIC_URL}/webhook/recall/{meeting_id}"
+            payload["webhook_url"] = webhook_url
+            payload["recording_config"]["realtime_endpoints"] = [
+                {
+                    "type": "webhook",
+                    "url": webhook_url,
+                    "events": ["transcript.data", "transcript.partial_data"]
+                }
+            ]
+        else:
+            logger.warning("APP_PUBLIC_URL is localhost or not set. Realtime streaming will be disabled to avoid API errors.")
+        
+        # DEBUG: Print the actual payload being sent
+        print(f"\n>>> RECALL BOT PAYLOAD: {json.dumps(payload, indent=2)}")
+        
         logger.info(f"Sending request to create bot: {url}")
         response = requests.post(url, json=payload, headers=self.headers)
 

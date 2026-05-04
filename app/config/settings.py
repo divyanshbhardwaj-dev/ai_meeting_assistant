@@ -18,6 +18,7 @@ class Settings:
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+    APP_PUBLIC_URL = os.getenv("APP_PUBLIC_URL", "http://localhost:8000")
 
     def __init__(self):
         if not self.OPEN_API_KEY:

@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Layout from "../../../shared/components/Layout";
 import { fetchMeetingById } from "../api";
 import {
@@ -24,10 +24,125 @@ export default function MeetingDetailPage() {
   const [activeTab, setActiveTab] = useState<
     "summary" | "transcript" | "tasks"
   >("summary");
+  
+  // Live transcript state
+  const [liveTranscript, setLiveTranscript] = useState<{speaker: string, text: string}[]>([]);
+  const [activePartial, setActivePartial] = useState<{speaker: string, text: string} | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    fetchMeetingById(id!).then(setMeeting);
+    let pollingInterval: any = null;
+    let reconnectTimeout: any = null;
+    let reconnectAttempts = 0;
+    let wsConnected = false;
+    let unmounted = false;
+
+    const parseTranscriptLines = (transcript: string) =>
+      transcript.split('\n').filter(Boolean).map((line: string) => {
+        const splitIdx = line.indexOf(':');
+        if (splitIdx > -1) {
+          return { speaker: line.slice(0, splitIdx).trim(), text: line.slice(splitIdx + 1).trim() };
+        }
+        return { speaker: "System", text: line };
+      });
+
+    const loadMeeting = async () => {
+      const data = await fetchMeetingById(id!);
+      setMeeting(data);
+
+      if (!wsConnected && data.transcript) {
+        setLiveTranscript(parseTranscriptLines(data.transcript));
+      }
+    };
+
+    loadMeeting();
+
+    const setupWebSocket = () => {
+      if (unmounted) return;
+
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      let wsUrl: string;
+      if (apiUrl && apiUrl !== "/") {
+        wsUrl = apiUrl.replace(/^http/, "ws") + `/ws/${id}`;
+      } else {
+        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        wsUrl = `${wsProtocol}//${window.location.host}/ws/${id}`;
+      }
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        wsConnected = true;
+        reconnectAttempts = 0;
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "transcript_update") {
+            if (data.is_final) {
+               setLiveTranscript(prev => [...prev, { speaker: data.speaker, text: data.text }]);
+               setActivePartial(null);
+            } else {
+               setActivePartial({ speaker: data.speaker, text: data.text });
+            }
+          } else if (data.type === "status_update") {
+            setMeeting((prev: any) => prev ? { ...prev, status: data.status } : prev);
+            // Refresh full meeting data to get final transcript, summary, etc.
+            loadMeeting();
+          }
+        } catch (e) {
+          console.error("Error parsing WS message:", e);
+        }
+      };
+
+      ws.onerror = () => {
+        wsConnected = false;
+      };
+
+      ws.onclose = () => {
+        wsConnected = false;
+        wsRef.current = null;
+        if (unmounted) return;
+
+        if (!pollingInterval) {
+          pollingInterval = setInterval(loadMeeting, 3000);
+        }
+
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+        reconnectAttempts++;
+        reconnectTimeout = setTimeout(setupWebSocket, delay);
+      };
+
+      wsRef.current = ws;
+    };
+
+    setupWebSocket();
+
+    return () => {
+      unmounted = true;
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
   }, [id]);
+
+  useEffect(() => {
+    // Auto-scroll to bottom of transcript
+    if (activeTab === "transcript" && transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [liveTranscript, activeTab]);
 
   if (!meeting) {
     return (
@@ -249,44 +364,98 @@ export default function MeetingDetailPage() {
 
               {/* Transcript View */}
               {activeTab === "transcript" && (
-                <div className="p-8">
-                  <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <div className="p-8 h-150 overflow-y-auto flex flex-col">
+                  <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 sticky top-0 bg-white z-10 py-2">
                     <Mic className="w-5 h-5 text-blue-600" />
-                    Full Transcript
+                    {meeting.status === 'completed' || meeting.status === 'failed' ? 'Full Transcript' : 'Live Transcript'}
                   </h3>
-                  <div className="space-y-6">
-                    {meeting.transcript_raw &&
-                    meeting.transcript_raw.length > 0 ? (
+                  <div className="space-y-6 flex-1">
+                    {/* If meeting is completed, show the official historical transcript first */}
+                    {(meeting.status === 'completed' || meeting.status === 'failed') && 
+                     meeting.transcript_raw && meeting.transcript_raw.length > 0 ? (
                       meeting.transcript_raw.map((item: any, idx: number) => (
                         <div key={idx} className="flex gap-4 group">
                           <div className="shrink-0 pt-1">
                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[11px] font-bold border border-slate-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-100 transition-colors">
-                              {item.participant.name.split(" ")[0][0]}
+                              {item.participant?.name?.split(" ")[0][0] || "U"}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0 pb-6 border-b border-slate-50 last:border-0">
                             <p className="text-sm font-bold text-slate-900 mb-1">
-                              {item.participant.name}
+                              {item.participant?.name || "Unknown"}
                             </p>
                             <p className="text-[15px] text-slate-600 leading-relaxed">
-                              {item.words.map((w: any) => w.text).join(" ")}
+                              {item.words?.map((w: any) => w.text).join(" ") || ""}
                             </p>
                           </div>
                         </div>
                       ))
-                    ) : (
-                      <div className="text-center py-20">
+                    ) : (liveTranscript.length > 0 || activePartial) ? (
+                      // Show live stream if we are in processing mode or have live data
+                      <>
+                        {liveTranscript.map((item: any, idx: number) => (
+                          <div key={idx} className="flex gap-4 group">
+                            <div className="shrink-0 pt-1">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[11px] font-bold border border-slate-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-100 transition-colors">
+                                {item.speaker[0]}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 pb-6 border-b border-slate-50 last:border-0">
+                              <p className="text-sm font-bold text-slate-900 mb-1">
+                                {item.speaker}
+                              </p>
+                              <p className="text-[15px] text-slate-600 leading-relaxed">
+                                {item.text}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {activePartial && (
+                          <div className="flex gap-4 group opacity-70 animate-pulse">
+                            <div className="shrink-0 pt-1">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[11px] font-bold border border-slate-200">
+                                {activePartial.speaker[0]}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 pb-6 border-b border-slate-50 last:border-0">
+                              <p className="text-sm font-bold text-slate-900 mb-1">
+                                {activePartial.speaker} <span className="text-[10px] font-normal text-blue-500 ml-2 italic">typing...</span>
+                              </p>
+                              <p className="text-[15px] text-slate-600 leading-relaxed">
+                                {activePartial.text}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : meeting.status === 'completed' ? (
+                       // If completed but no transcript at all
+                       <div className="text-center py-20">
                         <div className="w-16 h-16 mx-auto mb-4 bg-slate-50 rounded-full flex items-center justify-center">
-                          <AlertCircle className="w-8 h-8 text-slate-300" />
+                          <Mic className="w-8 h-8 text-slate-300" />
                         </div>
                         <h4 className="text-slate-900 font-bold mb-1">
-                          No transcript
+                          No transcript available
                         </h4>
                         <p className="text-sm text-slate-500">
-                          Transcript not available yet.
+                          We didn't detect any spoken words in this meeting.
+                        </p>
+                      </div>
+                    ) : (
+                      // Only show "Listening..." if it's currently live/processing
+                      <div className="text-center py-20">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-slate-50 rounded-full flex items-center justify-center animate-pulse">
+                          <Mic className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <h4 className="text-slate-900 font-bold mb-1">
+                          Listening...
+                        </h4>
+                        <p className="text-sm text-slate-500">
+                          Waiting for someone to speak.
                         </p>
                       </div>
                     )}
+                    <div ref={transcriptEndRef} />
                   </div>
                 </div>
               )}
@@ -388,7 +557,7 @@ export default function MeetingDetailPage() {
                       <p className="text-sm font-bold text-slate-900 truncate leading-none mb-1">
                         {participant.name}
                       </p>
-                      <p className="text-[11px] text-slate-500 truncate">
+                        <p className="text-[11px] text-slate-500 truncate">
                         {participant.email || "No email"}
                       </p>
                     </div>
@@ -418,7 +587,7 @@ export default function MeetingDetailPage() {
                       Turns
                     </label>
                     <p className="text-xl font-bold text-slate-900 tracking-tight">
-                      {meeting.transcript_raw?.length || 0}
+                      {liveTranscript.length > 0 ? liveTranscript.length : (meeting.transcript_raw?.length || 0)}
                     </p>
                   </div>
                   <div>
@@ -426,7 +595,9 @@ export default function MeetingDetailPage() {
                       Words
                     </label>
                     <p className="text-xl font-bold text-slate-900 tracking-tight">
-                      {meeting.transcript_text?.split(" ").length || 0}
+                      {liveTranscript.length > 0 
+                        ? liveTranscript.reduce((acc, curr) => acc + curr.text.split(' ').length, 0)
+                        : (meeting.transcript_text?.split(" ").length || 0)}
                     </p>
                   </div>
                 </div>

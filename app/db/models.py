@@ -22,6 +22,7 @@ class Meeting(Base):
 
     transcript_raw = Column(JSON)      # full Recall response
     transcript_text = Column(Text)     # formatted version
+    transcript = Column(Text, nullable=True) # live transcript lines
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     user = relationship("User", back_populates="meetings")
