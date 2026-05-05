@@ -14,25 +14,26 @@ def extract_transcript_fields(payload: dict, event: str) -> tuple:
     """Extract speaker, text, is_final from Recall.ai payload.
     Handles various nested formats from Recall.ai webhooks.
     """
-    # 1. Try to get it from payload['data']['data']['transcript'] (some versions of realtime)
     data_block = payload.get("data", {})
-    source = data_block.get("data", {}).get("transcript")
     
-    # 2. Try to get it from payload['data']['transcript'] (standard realtime format)
-    if not source:
-        source = data_block.get("transcript")
-        
-    # 3. Fallback to payload['transcript'] or just payload['data']
-    if not source:
-        source = payload.get("transcript")
-    if not source:
+    # 1. Real webhook format: chunk is in payload['data']['data']
+    inner_data = data_block.get("data", {})
+    if isinstance(inner_data, dict) and ("words" in inner_data or "text" in inner_data):
+        source = inner_data
+    # 2. Test webhook format or fallback: chunk is payload['data'] directly
+    elif "words" in data_block or "text" in data_block:
         source = data_block
-
-    # If we still have a list or something else, default to empty dict
-    if not isinstance(source, dict):
+    # 3. Fallback: maybe it's in payload['data']['transcript'] after all
+    elif isinstance(data_block.get("transcript"), dict) and ("words" in data_block["transcript"] or "text" in data_block["transcript"]):
+        source = data_block["transcript"]
+    # 4. Fallback: maybe it's in payload['transcript']
+    elif isinstance(payload.get("transcript"), dict) and ("words" in payload["transcript"] or "text" in payload["transcript"]):
+        source = payload["transcript"]
+    else:
         source = {}
 
     speaker = source.get("speaker", "Unknown Speaker")
+    
     is_final = source.get("is_final", event == "transcript.data")
 
     text = source.get("text", "")
@@ -53,7 +54,7 @@ async def process_transcript_event(meeting_id: int, payload: dict):
     speaker, text, is_final = extract_transcript_fields(payload, event)
 
     if not text:
-        logger.warning(f"[LIVE TRANSCRIPT] Empty text for meeting {meeting_id} | payload keys: {list(payload.keys())} | data keys: {list(payload.get('data', {}).keys())}")
+        logger.warning(f"[LIVE TRANSCRIPT] Empty text for meeting {meeting_id} | payload: {json.dumps(payload)}")
         return
 
     formatted_line = f"{speaker}: {text}"

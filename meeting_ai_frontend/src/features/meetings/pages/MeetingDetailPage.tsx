@@ -51,8 +51,8 @@ export default function MeetingDetailPage() {
       const data = await fetchMeetingById(id!);
       setMeeting(data);
 
-      if (!wsConnected && data.transcript) {
-        setLiveTranscript(parseTranscriptLines(data.transcript));
+      if (!wsConnected && (data.transcript_text || data.transcript)) {
+        setLiveTranscript(parseTranscriptLines(data.transcript_text || data.transcript));
       }
     };
 
@@ -61,10 +61,10 @@ export default function MeetingDetailPage() {
     const setupWebSocket = () => {
       if (unmounted) return;
 
-      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       let wsUrl: string;
       if (apiUrl && apiUrl !== "/") {
-        wsUrl = apiUrl.replace(/^http/, "ws") + `/ws/${id}`;
+        wsUrl = apiUrl.replace(/^http/, "ws").replace(/\/$/, "") + `/ws/${id}`;
       } else {
         const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         wsUrl = `${wsProtocol}//${window.location.host}/ws/${id}`;
@@ -283,11 +283,12 @@ export default function MeetingDetailPage() {
             <div className="flex gap-1 p-1 bg-slate-100/50 rounded-2xl w-fit">
               {tabItems.map((tab) => {
                 const Icon = tab.icon;
+                const isLive = tab.id === 'transcript' && (meeting.status === 'processing' || activePartial);
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all relative ${
                       activeTab === tab.id
                         ? "bg-white text-blue-600 shadow-sm"
                         : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
@@ -295,6 +296,12 @@ export default function MeetingDetailPage() {
                   >
                     <Icon className="w-4 h-4" />
                     {tab.label}
+                    {isLive && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -397,12 +404,12 @@ export default function MeetingDetailPage() {
                           <div key={idx} className="flex gap-4 group">
                             <div className="shrink-0 pt-1">
                               <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[11px] font-bold border border-slate-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-100 transition-colors">
-                                {item.speaker[0]}
+                                {item.speaker?.[0] || "U"}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0 pb-6 border-b border-slate-50 last:border-0">
                               <p className="text-sm font-bold text-slate-900 mb-1">
-                                {item.speaker}
+                                {item.speaker || "Unknown"}
                               </p>
                               <p className="text-[15px] text-slate-600 leading-relaxed">
                                 {item.text}
@@ -414,12 +421,12 @@ export default function MeetingDetailPage() {
                           <div className="flex gap-4 group opacity-70 animate-pulse">
                             <div className="shrink-0 pt-1">
                               <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[11px] font-bold border border-slate-200">
-                                {activePartial.speaker[0]}
+                                {activePartial.speaker?.[0] || "U"}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0 pb-6 border-b border-slate-50 last:border-0">
                               <p className="text-sm font-bold text-slate-900 mb-1">
-                                {activePartial.speaker} <span className="text-[10px] font-normal text-blue-500 ml-2 italic">typing...</span>
+                                {activePartial.speaker || "Unknown"} <span className="text-[10px] font-normal text-blue-500 ml-2 italic">typing...</span>
                               </p>
                               <p className="text-[15px] text-slate-600 leading-relaxed">
                                 {activePartial.text}
