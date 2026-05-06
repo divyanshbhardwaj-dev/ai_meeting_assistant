@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchMeetings } from "../api";
 import type { Meeting } from "../types";
 
@@ -12,5 +12,9 @@ export const useMeetings = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  return { data, loading };
+  const removeMeeting = useCallback((id: number) => {
+    setData((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  return { data, loading, removeMeeting };
 };

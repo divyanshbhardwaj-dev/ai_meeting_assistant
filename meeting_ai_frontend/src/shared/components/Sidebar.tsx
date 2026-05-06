@@ -6,7 +6,6 @@ import {
   Settings,
   LogOut,
   Zap,
-  CheckCircle2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import JoinMeetingModal from "../../features/meetings/components/JoinMeetingModal";
@@ -46,80 +45,90 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 h-screen bg-white text-slate-900 flex flex-col border-r border-slate-200">
+      <aside className="w-64 h-screen bg-white text-[#0F1523] flex flex-col border-r border-gray-200 shadow-sm relative">
         {/* Header */}
-        <div className="px-6 py-8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-              <Zap className="w-4 h-4 text-white" />
+        <div className="px-5 pt-6 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-9 h-9 bg-[#4F46E5] rounded-lg flex items-center justify-center shadow-sm">
+              <Zap className="w-5 h-5 text-white fill-white/20" />
             </div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-900">
-              MeetingAI
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-[#0F1523] leading-none mb-1">
+                Meeting<span className="text-[#4F46E5]">AI</span>
+              </h1>
+              <p className="text-[10px] text-[#777681] font-bold uppercase tracking-wider">Workspace</p>
+            </div>
           </div>
         </div>
 
         {/* New Meeting button */}
-        <div className="px-4 mb-6">
+        <div className="px-4 py-4">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-md text-sm font-semibold transition-all shadow-sm active:scale-[0.98] cursor-pointer group"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
             New Meeting
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 space-y-8 overflow-y-auto">
+        <nav className="flex-1 px-3 space-y-6 overflow-y-auto">
           <div>
-            <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Main Menu
+            <div className="px-3 mb-2 flex items-center gap-2">
+              <span className="text-[10px] font-bold text-[#777681] uppercase tracking-widest">Platform</span>
+              <div className="h-px flex-1 bg-gray-200" />
             </div>
-            <div className="space-y-1">
-              {navItems.map(({ path, label, icon: Icon }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group ${
-                    isActive(path)
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${isActive(path) ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
-                  />
-                  <span className="text-sm font-medium">{label}</span>
-                  {label === "Google Calendar" && isGoogleConnected && (
-                    <CheckCircle2 className="ml-auto w-3.5 h-3.5 text-emerald-500" />
-                  )}
-                </Link>
-              ))}
+
+            <div className="space-y-0.5">
+              {navItems.map(({ path, label, icon: Icon }) => {
+                const active = isActive(path);
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 group relative text-sm font-medium ${
+                      active
+                        ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
+                        : "text-[#777681] hover:text-[#0F1523] hover:bg-gray-50"
+                    }`}
+                  >
+                    {active && (
+                      <div className="absolute left-0 w-1 h-5 bg-[#4F46E5] rounded-r-full" />
+                    )}
+                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${active ? "text-[#4F46E5]" : ""}`} />
+                    <span>{label}</span>
+                    {label === "Google Calendar" && isGoogleConnected && (
+                      <div className="ml-auto w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
           <div>
-            <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Recent Activity
+            <div className="px-3 mb-2 flex items-center gap-2">
+              <span className="text-[10px] font-bold text-[#777681] uppercase tracking-widest">Recent Activity</span>
+              <div className="h-px flex-1 bg-gray-200" />
             </div>
-            <p className="text-xs text-slate-500 px-3 italic">
-              No recent meetings
-            </p>
+            <div className="px-3">
+              <p className="text-xs text-[#777681] italic">No recent activity</p>
+            </div>
           </div>
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all duration-200 group">
-            <Settings className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-slate-600" />
+        <div className="p-3 mt-auto border-t border-gray-200 space-y-1 bg-gray-50/50">
+          <button className="w-full flex items-center gap-3 px-3 py-2 text-[#777681] hover:text-[#0F1523] hover:bg-gray-100 rounded-md transition-all duration-200 group">
+            <Settings className="w-4 h-4 shrink-0 transition-colors group-hover:text-[#4F46E5]" />
             <span className="text-sm font-medium">Settings</span>
           </button>
-          <button
+          <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group"
+            className="w-full flex items-center gap-3 px-3 py-2 text-[#777681] hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200 group"
           >
-            <LogOut className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-red-500" />
+            <LogOut className="w-4 h-4 shrink-0 transition-colors group-hover:text-red-500" />
             <span className="text-sm font-medium">Logout</span>
           </button>
         </div>

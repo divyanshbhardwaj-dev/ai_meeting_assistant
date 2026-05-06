@@ -11,3 +11,6 @@ export const injectBot = (meetingUrl: string) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ meeting_url: meetingUrl }),
   });
+
+export const deleteMeeting = (id: number) =>
+  apiClient(`/meetings/${id}`, { method: "DELETE" });

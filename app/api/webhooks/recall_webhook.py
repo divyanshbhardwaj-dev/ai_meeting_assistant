@@ -12,35 +12,35 @@ recall_webhook_router = APIRouter()
 
 def extract_transcript_fields(payload: dict, event: str) -> tuple:
     """Extract speaker, text, is_final from Recall.ai payload.
-    Handles various nested formats from Recall.ai webhooks.
+    Handles various nested formats from Recall.ai webhooks and WebSockets.
     """
-    # 1. Try to get it from payload['data']['data']['transcript'] (some versions of realtime)
     data_block = payload.get("data", {})
-    source = data_block.get("data", {}).get("transcript")
     
-    # 2. Try to get it from payload['data']['transcript'] (standard realtime format)
-    if not source:
-        source = data_block.get("transcript")
-        
-    # 3. Fallback to payload['transcript'] or just payload['data']
-    if not source:
-        source = payload.get("transcript")
-    if not source:
-        source = data_block
+    # 1. Handle the deep format: payload['data']['data']['transcript' or 'words']
+    inner_data = data_block.get("data", {})
+    if isinstance(inner_data, dict):
+        source = inner_data.get("transcript") or inner_data
+    else:
+        source = data_block.get("transcript") or data_block
 
-    # If we still have a list or something else, default to empty dict
-    if not isinstance(source, dict):
-        source = {}
+    # 2. Extract Speaker
+    participant = source.get("participant", {})
+    if isinstance(participant, dict):
+        speaker = participant.get("name", "Unknown Speaker")
+    else:
+        speaker = source.get("speaker", "Unknown Speaker")
 
-    speaker = source.get("speaker", "Unknown Speaker")
+    # 3. Determine if Final
     is_final = source.get("is_final", event == "transcript.data")
 
+    # 4. Extract Text
     text = source.get("text", "")
     if not text:
+        # Check for 'words' list and join them
         words = source.get("words", [])
         if words:
             text = " ".join([w.get("text", "") for w in words]).strip()
-
+    
     return speaker, text, is_final
 
 

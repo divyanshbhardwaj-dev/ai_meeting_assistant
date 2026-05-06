@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from requests import Session
 from app.api.db_dependency import get_db
 from app.dependencies.auth import get_current_user
@@ -109,7 +109,44 @@ def get_meetings(
     user = Depends(get_current_user)
 ):
     meetings = db.query(Meeting).filter(Meeting.user_id == user.id).order_by(Meeting.created_at.desc()).all()
-    return meetings
+    return [
+        {
+            "id": m.id,
+            "meeting_url": m.meeting_url,
+            "title": m.title,
+            "status": m.status,
+            "summary": m.summary,
+            "created_at": m.created_at,
+            "updated_at": m.updated_at,
+            "participants": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "email": p.email,
+                    "is_organizer": p.is_organizer,
+                    "avatar_url": p.avatar_url,
+                }
+                for p in m.participants
+            ],
+        }
+        for m in meetings
+    ]
+
+
+@router.delete("/meetings/{meeting_id}")
+def delete_meeting(
+    meeting_id: int,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    if meeting.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this meeting")
+    db.delete(meeting)
+    db.commit()
+    return {"status": "ok", "deleted_id": meeting_id}
 
 
 @router.get("/allmeetings/{meeting_id}")
